@@ -6,6 +6,7 @@ import java.util.HashMap;
 import com.google.gson.Gson;
 
 import fr.cloudchat.data.DataStorage;
+import fr.cloudchat.data.DatabaseManager;
 import fr.cloudchat.data.IdentityStorage;
 import fr.cloudchat.network.messages.AbstractMessage;
 import fr.cloudchat.network.messages.out.ChatTextOutMessage;
@@ -16,6 +17,7 @@ import fr.cloudchat.social.SocialIdentity;
 
 public class ChatRoom {
 	
+	private int roomId;
 	private String name;
 	private transient IdentityStorage identities;
 	private transient ArrayList<ChatClient> clients;
@@ -36,6 +38,10 @@ public class ChatRoom {
 			
 			this.recalculateUID();
 		}
+	}
+	
+	public void save() {
+		DatabaseManager.saveRoom(this);
 	}
 	
 	public void recalculateUID() {
@@ -132,7 +138,8 @@ public class ChatRoom {
 			this.messages.add(message);
 		}
 		
-		DataStorage.saveEverything();
+		DatabaseManager.saveMessage(this, message);
+		//DataStorage.saveEverything();
 	}
 	
 	public void clearMessages() {
@@ -161,5 +168,13 @@ public class ChatRoom {
 		}
 		
 		DataStorage.saveEverything();
+	}
+
+	public int getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(int roomId) {
+		this.roomId = roomId;
 	}
 }

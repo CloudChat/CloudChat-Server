@@ -6,7 +6,11 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
+import org.eclipse.jetty.util.PathWatcher.Config;
+
+import fr.cloudchat.data.ConfigFile;
 import fr.cloudchat.data.DataStorage;
+import fr.cloudchat.data.DatabaseManager;
 import fr.cloudchat.http.ApiServer;
 import fr.cloudchat.network.ChatServer;
 
@@ -16,6 +20,7 @@ public class Program {
 	
 	private static ChatServer chatServer = null;
 	private static ApiServer apiServer = null;
+	private static ConfigFile config = null;
 	
 	public static ChatServer getChatServer() {
 		return chatServer;
@@ -24,7 +29,9 @@ public class Program {
 	public static void main(String[] args) {
 		logger.info("Starting CloudChat server ..");
 		
-		DataStorage.loadEverything();
+		readConfig();
+		//DataStorage.loadEverything();
+		DatabaseManager.init();
 		
 		// Starting ApiServer
 		apiServer = new ApiServer(3000);
@@ -45,5 +52,13 @@ public class Program {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public static void readConfig() {
+		config = ConfigFile.getConfig();
+	}
+
+	public static ConfigFile getConfig() {
+		return config;
 	}
 }

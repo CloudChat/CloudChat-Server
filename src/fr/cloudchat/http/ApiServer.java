@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import javax.xml.ws.handler.MessageContext.Scope;
 
 import fr.cloudchat.Program;
+import fr.cloudchat.data.DatabaseManager;
 import fr.cloudchat.data.RoomStorage;
 import fr.cloudchat.misc.ScopeLevelEnum;
 import fr.cloudchat.network.ChatRoom;
@@ -51,11 +52,13 @@ public class ApiServer {
 			logger.info("Create '" + provider + "' room instance");
 			room = new ChatRoom(provider);
 			RoomStorage.getInstance().registerRoom(room);
+			room.save();
 		}
 		
 		if(!room.getIdentities().hasIdentityByToken(token)) {
 			logger.info("New identity added");
 			room.getIdentities().addIdentity(identity);
+			DatabaseManager.saveIdentity(room, identity);
 		}
 		
 		return "OK";

@@ -8,6 +8,7 @@ import fr.cloudchat.social.SocialIdentity;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import fr.cloudchat.network.ChatClient;
@@ -35,9 +36,8 @@ public class ChatHandler {
 					parseChatCommand(client, textMessage.substring(1, textMessage.length()));
 					return;
 				}
-				
 				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-				Calendar cal = Calendar.getInstance();
+				Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Paris"));
 				
 				ChatTextOutMessage chatTextOutMessage = new ChatTextOutMessage
 						(textMessage, "#000000", client.getIdentity(), dateFormat.format(cal.getTime()),
@@ -104,8 +104,7 @@ public class ChatHandler {
 	public static void chatWithBot(ChatClient client, String subtile, String content,
 			boolean global) {
 		SocialIdentity fakeIdentity = new SocialIdentity
-				("Robot", 
-						"<img src=\"http://media4.popsugar-assets.com/files/2014/07/28/910/n/1922507/e399c9429796a92f_robotMSgrFH.xxxlarge/i/Robot.jpg\" width='32' height='32' />", 1);
+				("Robot", "<img src=\"http://media4.popsugar-assets.com/files/2014/07/28/910/n/1922507/e399c9429796a92f_robotMSgrFH.xxxlarge/i/Robot.jpg\" width='32' height='32' />", 1);
 		ChatTextOutMessage chatTextOutMessage = new ChatTextOutMessage
 				(content, "#000000", fakeIdentity, subtile,
 							client.getRoom().getAvailableMessageUID());
