@@ -40,7 +40,7 @@ public class ApiServer {
 		String provider = req.queryParams("provider");
 		
 		TokenizedSocialIdentity identity = new TokenizedSocialIdentity
-				(username, avatar, scope, token);
+				(username, avatar, scope, token, -1);
 		
 		ChatRoom room = null;
 		if(RoomStorage.getInstance().hasRoomWithName(provider)) {

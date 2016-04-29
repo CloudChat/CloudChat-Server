@@ -4,14 +4,16 @@ import fr.cloudchat.misc.ScopeLevelEnum;
 
 public class SocialIdentity {
 	
+	private int id;
 	private String username;
 	private String picture;
 	private int scope;
 	
-	public SocialIdentity(String username, String picture, int scope) {
+	public SocialIdentity(String username, String picture, int scope, int id) {
 		this.username = username;
 		this.picture = picture;
 		this.scope = scope;
+		this.id = id;
 	}
 	
 	public String getUsername() {
@@ -44,6 +46,14 @@ public class SocialIdentity {
 	
 	public TokenizedSocialIdentity tokenize(String token) {
 		return new TokenizedSocialIdentity(this.username, this.picture,
-				this.scope, token);
+				this.scope, token, this.id);
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 }

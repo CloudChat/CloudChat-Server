@@ -40,6 +40,16 @@ public class IdentityStorage {
 	public SocialIdentity getIdentity(String token) {
 		TokenizedSocialIdentity identity = this.identities.get(token);
 		return new SocialIdentity(identity.getUsername(), 
-				identity.getPicture(), identity.getScope());
+				identity.getPicture(), identity.getScope(), identity.getId());
+	}
+	
+	public SocialIdentity getIdentityById(int id) {
+		for(TokenizedSocialIdentity identity : this.identities.values()) {
+			if(identity.getId() == id) {
+				return new SocialIdentity(identity.getUsername(), 
+						identity.getPicture(), identity.getScope(), identity.getId());
+			}
+		}
+		return null;
 	}
 }

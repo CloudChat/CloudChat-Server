@@ -7,8 +7,8 @@ public class TokenizedSocialIdentity extends SocialIdentity {
 	private String token;
 	
 	public TokenizedSocialIdentity(String username, String avatar, int scope,
-			String token) {
-		super(username, avatar, scope);
+			String token, int id) {
+		super(username, avatar, scope, id);
 
 		this.setToken(token);
 	}

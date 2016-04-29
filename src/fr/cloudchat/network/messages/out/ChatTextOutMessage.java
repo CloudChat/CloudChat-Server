@@ -53,6 +53,7 @@ public class ChatTextOutMessage extends AbstractMessage implements JsonSerializa
 	private SocialIdentity from;
 	private String date;
 	private int message_uid;
+	private int id;
 	
 	public ChatTextOutMessage(String content, String color, SocialIdentity from,
 			String date, int messageUid) {
@@ -67,5 +68,13 @@ public class ChatTextOutMessage extends AbstractMessage implements JsonSerializa
 	@Override
 	public String serialize(Gson gson) {
 		return gson.toJson(this);
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 }

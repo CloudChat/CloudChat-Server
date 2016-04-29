@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import fr.cloudchat.Program;
 import fr.cloudchat.network.ChatRoom;
 import fr.cloudchat.network.messages.out.ChatTextOutMessage;
+import fr.cloudchat.social.SocialIdentity;
 import fr.cloudchat.social.TokenizedSocialIdentity;
 
 public class DatabaseManager {
@@ -43,8 +44,15 @@ public class DatabaseManager {
 					" VALUES (?, ?);", Statement.RETURN_GENERATED_KEYS);
 			stmt.setString(1, room.getName());
 			stmt.setString(2, "");
-			int id = stmt.executeUpdate();
-			room.setRoomId(id);
+			stmt.executeUpdate();
+			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	            	room.setRoomId(generatedKeys.getInt(1));
+	            }
+	            else {
+	                throw new SQLException("Creating user failed, no ID obtained.");
+	            }
+	        }
 		} catch (SQLException e) {
 			logger.severe(e.getMessage());
 		}
@@ -57,6 +65,8 @@ public class DatabaseManager {
 			while(result.next()) {
 				ChatRoom room = new ChatRoom(result.getString("room_name"));
 				room.setRoomId(result.getInt("id"));
+				loadIdentities(room);
+				loadMessages(room);
 				RoomStorage.getInstance().registerRoom(room);
 			}
 			result.close();
@@ -69,22 +79,50 @@ public class DatabaseManager {
 	public static void saveMessage(ChatRoom room, ChatTextOutMessage message) {
 		try {
 			PreparedStatement stmt = connection.prepareStatement("INSERT INTO chat_message "
-					+ "(message_uid, content, color, from_id, write_date)" + 
-					" VALUES (?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
+					+ "(message_uid, content, color, from_id, write_date, room_id)" + 
+					" VALUES (?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
 			stmt.setInt(1, message.getMessage_uid());
 			stmt.setString(2, message.getMessage());
 			stmt.setString(3, message.getColor());
-			stmt.setInt(4, -1);
+			stmt.setInt(4, message.getFrom().getId());
 			stmt.setString(5, message.getDate());
+			stmt.setInt(6, room.getRoomId());
+			stmt.executeUpdate();
 			
-			int id = stmt.executeUpdate();
+			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	                message.setId(generatedKeys.getInt(1));
+	            }
+	            else {
+	                throw new SQLException("Creating user failed, no ID obtained.");
+	            }
+	        }
 		} catch (SQLException e) {
 			logger.severe(e.getMessage());
 		}
 	}
 	
 	public static void loadMessages(ChatRoom room) {
-		//TODO: Load messages for the room
+		try {
+			Statement statement = connection.createStatement();
+			ResultSet result = statement.executeQuery( "SELECT id, message_uid, content, color, from_id, write_date, room_id"
+					+ " FROM chat_message WHERE room_id=" + room.getRoomId() );
+			while(result.next()) {
+				SocialIdentity identity = room.getIdentities().getIdentityById(result.getInt("from_id"));
+				if(identity != null){
+					ChatTextOutMessage message = new ChatTextOutMessage
+							(result.getString("content"), result.getString("color"), identity, result.getString("write_date"),
+									result.getInt("message_uid"));
+					message.setId(result.getInt("id"));
+					room.getMessages().add(message);
+					room.recalculateUID();
+				}
+			}
+			result.close();
+			statement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void saveIdentity(ChatRoom room, TokenizedSocialIdentity identity) {
@@ -97,14 +135,45 @@ public class DatabaseManager {
 			stmt.setInt(3, identity.getScope());
 			stmt.setString(4, identity.getToken());
 			stmt.setInt(5, room.getRoomId());
-			int id = stmt.executeUpdate();
+			stmt.executeUpdate();
+			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	            	identity.setId(generatedKeys.getInt(1));
+	            }
+	            else {
+	                throw new SQLException("Creating user failed, no ID obtained.");
+	            }
+	        }
 		} catch (SQLException e) {
 			logger.severe(e.getMessage());
 		}
 	}
 	
 	public static void loadIdentities(ChatRoom room) {
-		
-		
+		try {
+			Statement statement = connection.createStatement();
+			ResultSet result = statement.executeQuery( "SELECT id, username, picture, scope, token, room_id"
+					+ " FROM chat_identity WHERE room_id=" + room.getRoomId() );
+			while(result.next()) {
+				TokenizedSocialIdentity identity = new TokenizedSocialIdentity
+						(result.getString("username"), result.getString("picture"),
+								result.getInt("scope"), result.getString("token"), result.getInt("id"));
+				//logger.info("Loaded identity id: " + identity.getId());
+				room.getIdentities().addIdentity(identity);
+			}
+			result.close();
+			statement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void deleteMessage(ChatTextOutMessage message) {
+		try {
+			PreparedStatement stmt = connection.prepareStatement("DELETE FROM chat_message WHERE id=" + message.getId());
+			int id = stmt.executeUpdate();
+		} catch (SQLException e) {
+			logger.severe(e.getMessage());
+		}
 	}
 }

@@ -104,7 +104,8 @@ public class ChatHandler {
 	public static void chatWithBot(ChatClient client, String subtile, String content,
 			boolean global) {
 		SocialIdentity fakeIdentity = new SocialIdentity
-				("Robot", "<img src=\"http://media4.popsugar-assets.com/files/2014/07/28/910/n/1922507/e399c9429796a92f_robotMSgrFH.xxxlarge/i/Robot.jpg\" width='32' height='32' />", 1);
+				("Robot", "<img src=\"http://media4.popsugar-assets.com/files/2014/07/28/910/n/1922507/e399c9429796a92f_robotMSgrFH.xxxlarge/i/Robot.jpg\" width='32' height='32' />",
+						1, -1);
 		ChatTextOutMessage chatTextOutMessage = new ChatTextOutMessage
 				(content, "#000000", fakeIdentity, subtile,
 							client.getRoom().getAvailableMessageUID());

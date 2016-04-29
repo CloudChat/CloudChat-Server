@@ -22,6 +22,10 @@ public class ChatRoom {
 	private transient IdentityStorage identities;
 	private transient ArrayList<ChatClient> clients;
 	private ArrayList<ChatTextOutMessage> messages;
+	public ArrayList<ChatTextOutMessage> getMessages() {
+		return messages;
+	}
+
 	private int currentMessageId = 0;
 	
 	public ChatRoom(String name) {
@@ -144,10 +148,13 @@ public class ChatRoom {
 	
 	public void clearMessages() {
 		synchronized (this.messages) {
+			for(ChatTextOutMessage message : this.messages) {
+				DatabaseManager.deleteMessage(message);
+			}
 			this.messages.clear();
 		}
 		this.refreshMessageList();
-		DataStorage.saveEverything();
+		//DataStorage.saveEverything();
 	}
 	
 	public ChatTextOutMessage getMessageByUID(int uid) {
@@ -164,10 +171,9 @@ public class ChatRoom {
 	public void deleteMessage(ChatTextOutMessage message){
 		synchronized (this.messages) {
 			this.messages.remove(message);
+			DatabaseManager.deleteMessage(message);
 			this.refreshMessageList();
 		}
-		
-		DataStorage.saveEverything();
 	}
 
 	public int getRoomId() {
