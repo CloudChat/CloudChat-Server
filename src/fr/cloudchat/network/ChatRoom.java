@@ -2,6 +2,7 @@ package fr.cloudchat.network;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.PrimitiveIterator.OfDouble;
 
 import com.google.gson.Gson;
 
@@ -12,6 +13,7 @@ import fr.cloudchat.network.messages.AbstractMessage;
 import fr.cloudchat.network.messages.out.ChatTextOutMessage;
 import fr.cloudchat.network.messages.out.HistoryMessage;
 import fr.cloudchat.network.messages.out.UsersListMessage;
+import fr.cloudchat.network.messages.out.WritersListMessage;
 import fr.cloudchat.serialization.JsonSerializable;
 import fr.cloudchat.social.SocialIdentity;
 
@@ -78,6 +80,7 @@ public class ChatRoom {
 		synchronized (this.clients) {
 			this.clients.add(client);
 			this.refreshConnectedList();
+			this.refreshWriteModeList();
 		}
 	}
 	
@@ -85,6 +88,7 @@ public class ChatRoom {
 		synchronized (this.clients) {
 			this.clients.remove(client);
 			this.refreshConnectedList();
+			this.refreshWriteModeList();
 		}
 	}
 	
@@ -103,6 +107,22 @@ public class ChatRoom {
 			for(ChatClient client : this.clients) {
 				sendHistory(client);
 			}
+		}
+	}
+	
+	public void refreshWriteModeList() {
+		synchronized (this.clients) {
+			HashMap<String, SocialIdentity> writers = new HashMap<>();
+			for(ChatClient client : this.clients) {
+				if(!writers.containsKey(client.getIdentity().getUsername())){
+					if(client.isWriting()) {
+						writers.put(client.getIdentity().getUsername(),
+								client.getIdentity());
+					}
+				}
+			}
+			this.broadcast(new WritersListMessage
+					(new ArrayList<SocialIdentity>(writers.values())));
 		}
 	}
 	
@@ -143,7 +163,6 @@ public class ChatRoom {
 		}
 		
 		DatabaseManager.saveMessage(this, message);
-		//DataStorage.saveEverything();
 	}
 	
 	public void clearMessages() {
@@ -154,7 +173,6 @@ public class ChatRoom {
 			this.messages.clear();
 		}
 		this.refreshMessageList();
-		//DataStorage.saveEverything();
 	}
 	
 	public ChatTextOutMessage getMessageByUID(int uid) {

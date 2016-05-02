@@ -2,7 +2,9 @@ package fr.cloudchat.network.handlers;
 
 import fr.cloudchat.network.messages.in.ChatTextMessage;
 import fr.cloudchat.network.messages.in.MessageDeleteRequestMessage;
+import fr.cloudchat.network.messages.in.WriteModeMessage;
 import fr.cloudchat.network.messages.out.ChatTextOutMessage;
+import fr.cloudchat.serialization.MessageFormatter;
 import fr.cloudchat.social.SocialIdentity;
 
 import java.text.DateFormat;
@@ -38,9 +40,11 @@ public class ChatHandler {
 				}
 				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 				Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Paris"));
+				cal.add(Calendar.HOUR_OF_DAY, 2);
 				
 				ChatTextOutMessage chatTextOutMessage = new ChatTextOutMessage
-						(textMessage, "#000000", client.getIdentity(), dateFormat.format(cal.getTime()),
+						(MessageFormatter.reformateMessageForDisplayMedia(textMessage), "#000000",
+								client.getIdentity(), dateFormat.format(cal.getTime()),
 								client.getRoom().getAvailableMessageUID());
 				client.getRoom().saveMessage(chatTextOutMessage);
 				client.getRoom().broadcast(chatTextOutMessage);
@@ -76,6 +80,21 @@ public class ChatHandler {
 		}
 	}
 	
+	public static void handleWriteModeMessage(ChatClient client, WriteModeMessage message) {
+		if(client.hasIdentity()){
+			if(client.getRoom() != null){
+				client.setWriting(message.isToogle());
+				client.getRoom().refreshWriteModeList();
+			}
+			else {
+				client.disconnect();
+			}
+		}
+		else {
+			client.disconnect();
+		}
+	}
+	
 	public static void parseChatCommand(ChatClient client, String command) {
 		if(client.getIdentity().getScope() == 0) return;
 		String[] parameters = command.split(" ");
@@ -86,7 +105,7 @@ public class ChatHandler {
 		
 		case "annonce":
 			chatWithBot(client, "Annonce",
-					command.substring(parameters[0].length()).trim(), true);
+					MessageFormatter.reformateMessageForDisplayMedia(command.substring(parameters[0].length()).trim()), true);
 			break;
 
 		case "aide":

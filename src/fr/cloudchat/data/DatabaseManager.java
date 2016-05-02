@@ -23,6 +23,7 @@ public class DatabaseManager {
 		try {
 			Class.forName( "com.mysql.jdbc.Driver" );
 			ConfigFile.DatabaseConfig mysqlConf = Program.getConfig().getMysql();
+			
 			connection = DriverManager.getConnection
 					( "jdbc:mysql://" + mysqlConf.getUrl()  +
 							"/" + mysqlConf.getDatabase(),
@@ -37,9 +38,24 @@ public class DatabaseManager {
 		}
 	}
 	
+	public static void checkDatabaseConnection() {
+		try {
+			if(connection.isClosed()) {
+				ConfigFile.DatabaseConfig mysqlConf = Program.getConfig().getMysql();
+				connection = DriverManager.getConnection
+						( "jdbc:mysql://" + mysqlConf.getUrl()  +
+								"/" + mysqlConf.getDatabase(),
+								mysqlConf.getUsername(), mysqlConf.getPassword() );
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void saveRoom(ChatRoom room) {
 		
 		try {
+			checkDatabaseConnection();
 			PreparedStatement stmt = connection.prepareStatement("INSERT INTO chat_room (room_name, room_password)" + 
 					" VALUES (?, ?);", Statement.RETURN_GENERATED_KEYS);
 			stmt.setString(1, room.getName());
@@ -78,6 +94,7 @@ public class DatabaseManager {
 	
 	public static void saveMessage(ChatRoom room, ChatTextOutMessage message) {
 		try {
+			checkDatabaseConnection();
 			PreparedStatement stmt = connection.prepareStatement("INSERT INTO chat_message "
 					+ "(message_uid, content, color, from_id, write_date, room_id)" + 
 					" VALUES (?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
@@ -108,7 +125,16 @@ public class DatabaseManager {
 			ResultSet result = statement.executeQuery( "SELECT id, message_uid, content, color, from_id, write_date, room_id"
 					+ " FROM chat_message WHERE room_id=" + room.getRoomId() );
 			while(result.next()) {
-				SocialIdentity identity = room.getIdentities().getIdentityById(result.getInt("from_id"));
+				int fromId = result.getInt("from_id");
+				SocialIdentity identity = null;
+				if(fromId == -1) {
+					identity = new SocialIdentity
+							("Robot", "<img src=\"http://media4.popsugar-assets.com/files/2014/07/28/910/n/1922507/e399c9429796a92f_robotMSgrFH.xxxlarge/i/Robot.jpg\" width='32' height='32' />",
+									1, -1);
+				}
+				else {
+					identity = room.getIdentities().getIdentityById(fromId);
+				}
 				if(identity != null){
 					ChatTextOutMessage message = new ChatTextOutMessage
 							(result.getString("content"), result.getString("color"), identity, result.getString("write_date"),
@@ -127,6 +153,7 @@ public class DatabaseManager {
 	
 	public static void saveIdentity(ChatRoom room, TokenizedSocialIdentity identity) {
 		try {
+			checkDatabaseConnection();
 			PreparedStatement stmt = connection.prepareStatement("INSERT INTO chat_identity "
 					+ "(username, picture, scope, token, room_id)" + 
 					" VALUES (?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
@@ -170,6 +197,7 @@ public class DatabaseManager {
 	
 	public static void deleteMessage(ChatTextOutMessage message) {
 		try {
+			checkDatabaseConnection();
 			PreparedStatement stmt = connection.prepareStatement("DELETE FROM chat_message WHERE id=" + message.getId());
 			int id = stmt.executeUpdate();
 		} catch (SQLException e) {

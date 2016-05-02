@@ -12,6 +12,7 @@ import fr.cloudchat.network.messages.AbstractMessage;
 import fr.cloudchat.network.messages.in.ChatTextMessage;
 import fr.cloudchat.network.messages.in.MessageDeleteRequestMessage;
 import fr.cloudchat.network.messages.in.RegisterMessage;
+import fr.cloudchat.network.messages.in.WriteModeMessage;
 import fr.cloudchat.serialization.JsonSerializable;
 import fr.cloudchat.social.SocialIdentity;
 
@@ -22,6 +23,8 @@ public class ChatClient implements MessageClient {
 	private WebSocket socket;
 	private SocialIdentity identity;
 	private ChatRoom room;
+	
+	private boolean isWriting = false;
 
 	public ChatClient(WebSocket socket) {
 		this.socket = socket;
@@ -85,6 +88,11 @@ public class ChatClient implements MessageClient {
 				ChatHandler.handleMessageDeleteRequestMessage(this, 
 						gson.fromJson(raw, MessageDeleteRequestMessage.class));
 				break;
+			
+			case "WRITE_MODE":
+				ChatHandler.handleWriteModeMessage(this, 
+						gson.fromJson(raw, WriteModeMessage.class));
+				break;
 		}
 	}
 
@@ -106,5 +114,13 @@ public class ChatClient implements MessageClient {
 
 	public void setIdentity(SocialIdentity identity) {
 		this.identity = identity;
+	}
+
+	public boolean isWriting() {
+		return isWriting;
+	}
+
+	public void setWriting(boolean isWriting) {
+		this.isWriting = isWriting;
 	}
 }
